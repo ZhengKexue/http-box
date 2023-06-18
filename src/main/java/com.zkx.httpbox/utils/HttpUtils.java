@@ -1,16 +1,15 @@
 package com.zkx.httpbox.utils;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Collections2;
 import com.zkx.httpbox.enums.ContentType;
 import com.zkx.httpbox.enums.HttpMethod;
 import com.zkx.httpbox.handler.RTHandler;
 import com.zkx.httpbox.model.RT;
-import com.zkx.notice.common.utils.JSONUtils;
-import com.zkx.util.HttpClientFactory;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -34,7 +33,7 @@ public class HttpUtils {
         Request.Builder builder = new Request.Builder()
                 .get()//get请求
                 .url(fullUrl);//请求地址
-        if(!CollectionUtils.isEmpty(header)){
+        if( header != null && header.size() > 0){
             builder.headers(Headers.of(header));
         }
 
@@ -79,7 +78,7 @@ public class HttpUtils {
                 .post(body);
 
         builder.addHeader("Content-Type", contentType);
-        if(!CollectionUtils.isEmpty(header)){
+        if(header != null){
             for (String key : header.keySet()) {
                 builder.addHeader(key,header.get(key));
             }

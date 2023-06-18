@@ -19,15 +19,9 @@ http-box 是一个基于json配置的http 请求链式处理器，通过json定�
 
 ### 安装教程
 
-1.  pom 依赖引入
-```java
-    <dependency>
-        <groupId>com.zkx</groupId>
-        <artifactId>http-box</artifactId>
-        <version>1.0.0</version>
-    </dependency>
-
- ``` 
+1. git clone https://gitee.com/kexuezheng/http-box.git 到本地文件
+2. idea 打开工程 http-box
+ 
 
 ### 使用说明
 
@@ -73,57 +67,59 @@ http-box 是一个基于json配置的http 请求链式处理器，通过json定�
 ####  2.  通过HttpBox发起请求
     
 ```java
- 
-    @Test
-    public void testExecute(){
-        String json =  "    {\"requestList\":[\n" +
-                "        {   \"name\":\"获取QQ头像\",\n" +
-                "            \"description\":\"获取QQ头像\",\n" +
-                "            \"url\":\"https://api.btstu.cn/qqxt/api.php?qq=920948763@qq.com\",\n" +
-                "            \"contentType\":\"application/x-www-form-urlencoded\",\n" +
-                "            \"method\":\"GET\",\n" +
-                "            \"header\":{},\n" +
-                "            \"body\":{\n" +
-                "                \"qq\":\"920948763@qq.com\"\n" +
-                "            },\n" +
-                "            \"resultSuccessCheck\":\"#currentHttp.responseBody!=null &&  #currentHttp.responseBody.code==1\"\n" +
-                "        }\n" +
-                "    ]\n" +
-                " }   ";
+  package com.zkx.httpbox;
 
+import com.alibaba.fastjson.JSON;
+import com.zkx.httpbox.model.HttpRequestChainConfig;
+import com.zkx.httpbox.model.HttpRequestConfig;
+import com.zkx.httpbox.model.ReRt;
+import com.zkx.httpbox.utils.OgnlUtils;
+import lombok.extern.slf4j.Slf4j;
+import ognl.OgnlContext;
+import org.junit.Test;
 
-        HttpRequestChainConfig chainConfig = JSONUtils.parseObject(json,HttpRequestChainConfig.class);
-        log.info(">> chainConfig:{}",JSONUtils.toJSONString(chainConfig));
+import java.util.Arrays;
+import java.util.HashMap;
 
-        //构建OgnlContext上下文
-        OgnlContext ognlContext = (OgnlContext) Ognl.createDefaultContext(new Object(), new DefaultClassResolver(),
-                new DefaultTypeConverter());
-        // Run the test
+@Slf4j
+public class HttpBoxTest {
 
-        httpBoxUnderTest.execute(chainConfig, ognlContext);
-        Assertions.assertEquals(ognlContext != null ,true);
-        log.info(">> ognlContext :{}", JSONUtils.toJSONString(ognlContext));
-        //最后一个请求的返回结果 ognlContext.get("currentHttp")
-        log.info(">> ognlContext :{}", JSONUtils.toJSONString(ognlContext.get("currentHttp")));
-    }
+  /**
+   *
+   * 入门案例
+   */
+  @Test
+  public  void testExecute1() {
 
- ``` 
+    // Setup, 请求链对象定义: 一个请求获取qq头像
+    final HttpRequestChainConfig chainConfig  = JSON.parseObject("{\n" +
+            "      \"requestList\":[\n" +
+            "         {   \"name\":\"获取QQ头像\",\n" +
+            "         \"description\":\"获取QQ头像\",\n" +
+            "         \"url\":\"https://api.btstu.cn/qqxt/api.php?qq=920948763@qq.com\",\n" +
+            "         \"contentType\":\"application/x-www-form-urlencoded\",\n" +
+            "         \"method\":\"GET\",\n" +
+            "         \"header\":{},\n" +
+            "         \"body\":{\n" +
+            "         \"qq\":\"920948763@qq.com\"\n" +
+            "         },\n" +
+            "       \"resultSuccessCheck\":\"#currentHttp.responseBody!=null &&  #currentHttp.responseBody.code==1\"}\n" +
+            "      ]\n" +
+            "     }",HttpRequestChainConfig.class);
 
-####  3.  结果输出
-结果都存储在了ognlContext中可以从中获取currentHttp ，最终响应结果是currentHttp.responseBody字段. imgurl 是对应的头像
-```java
- 
-   # 获取最后一个请求的结果对象  ognlContext.get("currentHttp") 
-   # currentHttp 对象结构
-    {
-    "requestHeaders": {"Header1":"1","Header2":"2"}, -- 请求头
-    "requestBody": {},     -- 请求体
-    "responseHeaders": {}, -- 响应头
-    "responseCookies": {}, -- 响应Cookie
-    "responseBody": {
-        {"code":1,"imgurl":"https://q.qlogo.cn/headimg_dl?dst_uin=920948763@qq.com&spec=100","name":""}
-     }     -- 响应体
-    }
+    //上下文初始化
+    final OgnlContext ognlContext = new OgnlContext(new HashMap<>());
+
+    // 执行请求链
+    HttpBox.execute(chainConfig, ognlContext);
+
+    //获得结果
+    //{"requestBody":{"qq":"920948763@qq.com"},"requestHeaders":{},"responseBody":{"name":"","imgurl":"https://q.qlogo.cn/headimg_dl?dst_uin=920948763@qq.com?qq=920948763@qq.com&spec=100","code":1},"responseCookies":{"PHPSESSID":"7eg0ne101e4c5q6a02h02v5npu"," path":"/"},"responseHeaders":{"Server":"nginx","Date":"Sun, 18 Jun 2023 16:09:47 GMT","Content-Type":"text/html; charset=UTF-8","Transfer-Encoding":"chunked","Connection":"keep-alive","Vary":"Accept-Encoding","Set-Cookie":"PHPSESSID=7eg0ne101e4c5q6a02h02v5npu; path=/","Expires":"Thu, 19 Nov 1981 08:52:00 GMT","Cache-Control":"no-store, no-cache, must-revalidate","Pragma":"no-cache","Access-Control-Allow-Origin":"*","Strict-Transport-Security":"max-age=31536000"}}
+    ReRt reRt = (ReRt)OgnlUtils.getValue(OgnlUtils.CURRENT_HTTP, ognlContext);
+    System.out.printf(JSON.toJSONString(reRt));
+  }
+
+}
 
  ``` 
 
